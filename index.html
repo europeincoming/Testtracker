@@ -8,155 +8,204 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body { 
-            padding-top: 20px; 
+            padding: 20px; 
             background: #f8f9fa;
+            font-size: 14px;
         }
-        .city-tabs { 
-            background: white; 
-            padding: 15px; 
-            border-radius: 8px; 
+        .header-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
             margin-bottom: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .nav-tabs .nav-link { 
-            color: #495057; 
-        }
-        .nav-tabs .nav-link.active { 
-            font-weight: 600; 
-        }
-        .table-container { 
-            background: white; 
-            padding: 20px; 
+        .filters {
+            background: white;
+            padding: 15px;
             border-radius: 8px;
+            margin-bottom: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .status-blocked { 
-            background: #ffc107; 
-            color: #000; 
-        }
-        .status-confirmed { 
-            background: #28a745; 
-            color: #fff; 
-        }
-        .status-cancellation { 
-            background: #ff9800; 
-            color: #fff; 
-        }
-        .status-cancelled { 
-            background: #dc3545; 
-            color: #fff; 
-        }
-        .deadline-warning { 
-            background-color: #fff3cd !important;
-        }
-        .stats-card {
+        .stats-row {
             background: #e7f3ff;
-            padding: 15px;
+            padding: 10px 15px;
             border-radius: 6px;
             margin-bottom: 15px;
         }
-        .btn-action {
+        .table-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        table {
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        td.editable {
+            cursor: pointer;
+            position: relative;
+        }
+        td.editable:hover {
+            background: #f0f8ff;
+        }
+        td.editing {
+            padding: 0 !important;
+        }
+        td.editing input, td.editing select {
+            width: 100%;
+            border: 2px solid #0d6efd;
+            padding: 4px 8px;
+            font-size: 13px;
+        }
+        .status-blocked { background: #ffc107; color: #000; }
+        .status-confirmed { background: #28a745; color: #fff; }
+        .status-cancellation { background: #ff9800; color: #fff; }
+        .status-cancelled { background: #dc3545; color: #fff; }
+        .deadline-warning { 
+            background-color: #fff3cd !important;
+        }
+        .btn-sm {
             padding: 0.25rem 0.5rem;
             font-size: 0.875rem;
         }
-        table {
-            font-size: 0.9rem;
+        .price-cell {
+            text-align: right;
+            font-family: monospace;
         }
-        .modal-lg {
-            max-width: 800px;
+        .comment-indicator {
+            color: #0d6efd;
+            cursor: pointer;
+        }
+        .comment-indicator:hover {
+            color: #0a58ca;
         }
     </style>
 </head>
 <body>
     <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Hotel Blocking Tracker</h2>
-            <div>
-                <button class="btn btn-success" onclick="exportData()">
-                    <i class="bi bi-download"></i> Export Data
-                </button>
-                <button class="btn btn-primary" onclick="document.getElementById('importFile').click()">
-                    <i class="bi bi-upload"></i> Import Data
-                </button>
-                <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+        <div class="header-section">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3>Hotel Blocking Tracker</h3>
+                <div>
+                    <button class="btn btn-success btn-sm" onclick="exportData()">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="document.getElementById('importFile').click()">
+                        <i class="bi bi-upload"></i> Import
+                    </button>
+                    <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+                </div>
             </div>
         </div>
 
-        <div class="city-tabs">
-            <ul class="nav nav-tabs" id="cityTabs" role="tablist"></ul>
+        <div class="filters">
+            <div class="row g-2">
+                <div class="col-md-2">
+                    <input type="text" class="form-control form-control-sm" id="filterTourCode" placeholder="Tour Code" onkeyup="applyFilters()">
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="filterCountry" onchange="applyFilters()">
+                        <option value="">All Countries</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="filterCity" onchange="applyFilters()">
+                        <option value="">All Cities</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="text" class="form-control form-control-sm" id="filterHotel" placeholder="Hotel Name" onkeyup="applyFilters()">
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" id="filterStatus" onchange="applyFilters()">
+                        <option value="">All Status</option>
+                        <option value="blocked">Blocked</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="cancellation">Cancellation</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-sm btn-outline-secondary w-100" onclick="clearFilters()">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <div class="tab-content" id="cityTabContent"></div>
+        <div class="stats-row">
+            <div class="row text-center">
+                <div class="col">
+                    <strong>Total Bookings:</strong> <span id="statTotal">0</span>
+                </div>
+                <div class="col">
+                    <strong>Total Rooms:</strong> <span id="statRooms">0</span>
+                </div>
+                <div class="col">
+                    <strong>Blocked:</strong> <span id="statBlocked">0</span>
+                </div>
+                <div class="col">
+                    <strong>Confirmed:</strong> <span id="statConfirmed">0</span>
+                </div>
+                <div class="col">
+                    <strong>Cancellation:</strong> <span id="statCancellation">0</span>
+                </div>
+                <div class="col">
+                    <strong>Cancelled:</strong> <span id="statCancelled">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <button class="btn btn-primary btn-sm" onclick="addNewRow()">
+                <i class="bi bi-plus-circle"></i> Add Booking
+            </button>
+        </div>
+
+        <div class="table-container">
+            <table class="table table-sm table-hover table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tour Code</th>
+                        <th>Country</th>
+                        <th>City</th>
+                        <th>Hotel</th>
+                        <th>Check-in</th>
+                        <th>Check-out</th>
+                        <th>Rooms Config</th>
+                        <th>Single PPPN</th>
+                        <th>Double PPPN</th>
+                        <th>Triple PPPN</th>
+                        <th>CWB</th>
+                        <th>CNB</th>
+                        <th>Dinner Cost</th>
+                        <th>Status</th>
+                        <th>Canx Deadline</th>
+                        <th>Comments</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="mainTableBody"></tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- Add/Edit Modal -->
-    <div class="modal fade" id="bookingModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+    <!-- Comments Modal -->
+    <div class="modal fade" id="commentsModal" tabindex="-1">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Add Booking</h5>
+                    <h5 class="modal-title">Comments</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="bookingForm">
-                        <input type="hidden" id="bookingId">
-                        <input type="hidden" id="bookingCity">
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Hotel Name *</label>
-                                <input type="text" class="form-control" id="hotelName" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Rooms Config *</label>
-                                <input type="text" class="form-control" id="roomsConfig" placeholder="e.g., 18 dbl+4 sgl" required>
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Check-in *</label>
-                                <input type="date" class="form-control" id="checkIn" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Check-out *</label>
-                                <input type="date" class="form-control" id="checkOut" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Price/Person/Night *</label>
-                                <input type="number" class="form-control" id="pricePerPerson" step="0.01" required>
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Status *</label>
-                                <select class="form-select" id="status" required>
-                                    <option value="blocked">Blocked</option>
-                                    <option value="confirmed">Confirmed</option>
-                                    <option value="cancellation">Cancellation</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Cancellation Deadline</label>
-                                <input type="date" class="form-control" id="cancellationDeadline">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Payment Deadline</label>
-                                <input type="date" class="form-control" id="paymentDeadline">
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Notes</label>
-                            <textarea class="form-control" id="notes" rows="2"></textarea>
-                        </div>
-                    </form>
+                    <textarea class="form-control" id="commentsText" rows="6"></textarea>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveBooking()">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveComments()">Save</button>
                 </div>
             </div>
         </div>
@@ -164,8 +213,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // European cities data
-        const cities = {
+        const countries = {
             'France': ['Paris', 'Nice', 'Lyon', 'Marseille'],
             'Italy': ['Rome', 'Venice', 'Florence', 'Milan'],
             'Spain': ['Barcelona', 'Madrid', 'Seville', 'Valencia'],
@@ -187,152 +235,97 @@
             'UK': ['London', 'Edinburgh', 'Manchester', 'Liverpool']
         };
 
-        let bookings = {};
-        let currentCity = '';
-        let editingId = null;
+        let bookings = [];
+        let currentEditingId = null;
+        let currentCommentId = null;
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadData();
-            initializeCities();
-            if (Object.keys(bookings).length === 0) {
-                // First time - initialize empty structure
-                Object.values(cities).flat().forEach(city => {
-                    bookings[city] = [];
-                });
-                saveData();
-            }
-            showCity(Object.values(cities).flat()[0]);
+            populateFilters();
+            renderTable();
         });
 
-        function initializeCities() {
-            const tabsContainer = document.getElementById('cityTabs');
-            const contentContainer = document.getElementById('cityTabContent');
+        function populateFilters() {
+            const countrySelect = document.getElementById('filterCountry');
+            const citySelect = document.getElementById('filterCity');
             
-            Object.entries(cities).forEach(([country, cityList], countryIndex) => {
-                // Add country header
-                const countryHeader = document.createElement('li');
-                countryHeader.className = 'nav-item dropdown';
-                countryHeader.innerHTML = `
-                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">
-                        ${country}
-                    </a>
-                    <ul class="dropdown-menu" id="dropdown-${country.replace(/\s/g, '')}"></ul>
-                `;
-                tabsContainer.appendChild(countryHeader);
+            Object.keys(countries).sort().forEach(country => {
+                countrySelect.innerHTML += `<option value="${country}">${country}</option>`;
+            });
 
-                const dropdown = document.getElementById(`dropdown-${country.replace(/\s/g, '')}`);
-                
-                cityList.forEach((city, cityIndex) => {
-                    // Add to dropdown
-                    const dropdownItem = document.createElement('li');
-                    dropdownItem.innerHTML = `<a class="dropdown-item" href="#" onclick="showCity('${city}'); return false;">${city}</a>`;
-                    dropdown.appendChild(dropdownItem);
-
-                    // Initialize booking array if not exists
-                    if (!bookings[city]) bookings[city] = [];
-
-                    // Create tab content
-                    const tabPane = document.createElement('div');
-                    tabPane.className = 'tab-pane fade';
-                    tabPane.id = `city-${city.replace(/\s/g, '')}`;
-                    tabPane.innerHTML = `
-                        <div class="stats-card">
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <strong>Total Bookings:</strong> <span id="total-${city}">0</span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>Total Rooms:</strong> <span id="rooms-${city}">0</span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>Blocked:</strong> <span id="blocked-${city}">0</span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>Confirmed:</strong> <span id="confirmed-${city}">0</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h4>${city}</h4>
-                            <button class="btn btn-primary" onclick="addBooking('${city}')">
-                                <i class="bi bi-plus-circle"></i> Add Booking
-                            </button>
-                        </div>
-                        <div class="table-container">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Hotel</th>
-                                            <th>Check-in</th>
-                                            <th>Check-out</th>
-                                            <th>Rooms</th>
-                                            <th>Price/Person</th>
-                                            <th>Status</th>
-                                            <th>Canx Deadline</th>
-                                            <th>Payment Deadline</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tbody-${city}"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    `;
-                    contentContainer.appendChild(tabPane);
-                });
+            Object.values(countries).flat().sort().forEach(city => {
+                citySelect.innerHTML += `<option value="${city}">${city}</option>`;
             });
         }
 
-        function showCity(city) {
-            currentCity = city;
-            
-            // Hide all tabs
-            document.querySelectorAll('.tab-pane').forEach(pane => {
-                pane.classList.remove('show', 'active');
-            });
-            
-            // Show selected tab
-            const pane = document.getElementById(`city-${city.replace(/\s/g, '')}`);
-            if (pane) {
-                pane.classList.add('show', 'active');
-                renderCity(city);
-            }
+        function addNewRow() {
+            const newBooking = {
+                id: Date.now().toString(),
+                tourCode: '',
+                country: '',
+                city: '',
+                hotelName: '',
+                checkIn: '',
+                checkOut: '',
+                roomsConfig: '',
+                singlePPPN: '',
+                doublePPPN: '',
+                triplePPPN: '',
+                cwb: '',
+                cnb: '',
+                dinnerCost: '',
+                status: 'blocked',
+                cancellationDeadline: '',
+                comments: ''
+            };
+            bookings.unshift(newBooking);
+            saveData();
+            renderTable();
         }
 
-        function renderCity(city) {
-            const tbody = document.getElementById(`tbody-${city}`);
-            const cityBookings = bookings[city] || [];
+        function renderTable() {
+            const tbody = document.getElementById('mainTableBody');
+            const filteredBookings = getFilteredBookings();
             
-            if (cityBookings.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No bookings yet</td></tr>';
-                updateStats(city);
+            if (filteredBookings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="17" class="text-center text-muted">No bookings found</td></tr>';
+                updateStats(filteredBookings);
                 return;
             }
 
             const today = new Date();
             const sevenDaysFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-            tbody.innerHTML = cityBookings.map(booking => {
+            tbody.innerHTML = filteredBookings.map(booking => {
                 const canxDeadline = booking.cancellationDeadline ? new Date(booking.cancellationDeadline) : null;
                 const isWarning = canxDeadline && canxDeadline >= today && canxDeadline <= sevenDaysFromNow;
+                const hasComments = booking.comments && booking.comments.trim() !== '';
                 
                 return `
-                    <tr class="${isWarning ? 'deadline-warning' : ''}">
-                        <td>${booking.hotelName}</td>
-                        <td>${formatDate(booking.checkIn)}</td>
-                        <td>${formatDate(booking.checkOut)}</td>
-                        <td>${booking.roomsConfig}</td>
-                        <td>€${booking.pricePerPerson}</td>
-                        <td><span class="badge status-${booking.status}">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span></td>
-                        <td>${booking.cancellationDeadline ? formatDate(booking.cancellationDeadline) : '-'}</td>
-                        <td>${booking.paymentDeadline ? formatDate(booking.paymentDeadline) : '-'}</td>
+                    <tr class="${isWarning ? 'deadline-warning' : ''}" data-id="${booking.id}">
+                        <td class="editable" onclick="editCell(this, '${booking.id}', 'tourCode', 'text')">${booking.tourCode || '-'}</td>
+                        <td class="editable" onclick="editCell(this, '${booking.id}', 'country', 'select-country')">${booking.country || '-'}</td>
+                        <td class="editable" onclick="editCell(this, '${booking.id}', 'city', 'select-city')">${booking.city || '-'}</td>
+                        <td class="editable" onclick="editCell(this, '${booking.id}', 'hotelName', 'text')">${booking.hotelName || '-'}</td>
+                        <td class="editable" onclick="editCell(this, '${booking.id}', 'checkIn', 'date')">${formatDate(booking.checkIn)}</td>
+                        <td class="editable" onclick="editCell(this, '${booking.id}', 'checkOut', 'date')">${formatDate(booking.checkOut)}</td>
+                        <td class="editable" onclick="editCell(this, '${booking.id}', 'roomsConfig', 'text')">${booking.roomsConfig || '-'}</td>
+                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'singlePPPN', 'number')">€${booking.singlePPPN || '-'}</td>
+                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'doublePPPN', 'number')">€${booking.doublePPPN || '-'}</td>
+                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'triplePPPN', 'number')">€${booking.triplePPPN || '-'}</td>
+                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'cwb', 'number')">€${booking.cwb || '-'}</td>
+                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'cnb', 'number')">€${booking.cnb || '-'}</td>
+                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'dinnerCost', 'number')">€${booking.dinnerCost || '-'}</td>
+                        <td class="editable" onclick="editCell(this, '${booking.id}', 'status', 'select-status')">
+                            <span class="badge status-${booking.status}">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>
+                        </td>
+                        <td class="editable" onclick="editCell(this, '${booking.id}', 'cancellationDeadline', 'date')">${formatDate(booking.cancellationDeadline)}</td>
+                        <td class="text-center">
+                            <i class="bi bi-chat-square-text comment-indicator ${hasComments ? 'text-primary' : 'text-muted'}" 
+                               onclick="openComments('${booking.id}')"></i>
+                        </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-primary btn-action" onclick="editBooking('${city}', '${booking.id}')">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteBooking('${city}', '${booking.id}')">
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteBooking('${booking.id}')">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
@@ -340,90 +333,139 @@
                 `;
             }).join('');
 
-            updateStats(city);
+            updateStats(filteredBookings);
         }
 
-        function updateStats(city) {
-            const cityBookings = bookings[city] || [];
+        function editCell(cell, id, field, type) {
+            if (currentEditingId) return; // One edit at a time
             
-            document.getElementById(`total-${city}`).textContent = cityBookings.length;
+            currentEditingId = id;
+            const booking = bookings.find(b => b.id === id);
+            const currentValue = booking[field] || '';
             
-            // Calculate total rooms (parse from config like "18 dbl+4 sgl")
-            const totalRooms = cityBookings.reduce((sum, b) => {
+            cell.classList.add('editing');
+            
+            let inputHTML = '';
+            if (type === 'text') {
+                inputHTML = `<input type="text" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeypress="handleKeyPress(event, this, '${id}', '${field}')" autofocus>`;
+            } else if (type === 'date') {
+                inputHTML = `<input type="date" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeypress="handleKeyPress(event, this, '${id}', '${field}')" autofocus>`;
+            } else if (type === 'number') {
+                inputHTML = `<input type="number" step="0.01" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeypress="handleKeyPress(event, this, '${id}', '${field}')" autofocus>`;
+            } else if (type === 'select-status') {
+                inputHTML = `
+                    <select onblur="saveCell(this, '${id}', '${field}')" onchange="saveCell(this, '${id}', '${field}')" autofocus>
+                        <option value="blocked" ${currentValue === 'blocked' ? 'selected' : ''}>Blocked</option>
+                        <option value="confirmed" ${currentValue === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                        <option value="cancellation" ${currentValue === 'cancellation' ? 'selected' : ''}>Cancellation</option>
+                        <option value="cancelled" ${currentValue === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                    </select>
+                `;
+            } else if (type === 'select-country') {
+                inputHTML = `
+                    <select onblur="saveCell(this, '${id}', '${field}')" onchange="saveCell(this, '${id}', '${field}')" autofocus>
+                        <option value="">-</option>
+                        ${Object.keys(countries).sort().map(c => 
+                            `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
+                        ).join('')}
+                    </select>
+                `;
+            } else if (type === 'select-city') {
+                inputHTML = `
+                    <select onblur="saveCell(this, '${id}', '${field}')" onchange="saveCell(this, '${id}', '${field}')" autofocus>
+                        <option value="">-</option>
+                        ${Object.values(countries).flat().sort().map(c => 
+                            `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
+                        ).join('')}
+                    </select>
+                `;
+            }
+            
+            cell.innerHTML = inputHTML;
+            cell.querySelector('input, select').focus();
+        }
+
+        function handleKeyPress(event, input, id, field) {
+            if (event.key === 'Enter') {
+                saveCell(input, id, field);
+            }
+        }
+
+        function saveCell(input, id, field) {
+            const value = input.value;
+            const booking = bookings.find(b => b.id === id);
+            booking[field] = value;
+            
+            currentEditingId = null;
+            saveData();
+            renderTable();
+        }
+
+        function openComments(id) {
+            currentCommentId = id;
+            const booking = bookings.find(b => b.id === id);
+            document.getElementById('commentsText').value = booking.comments || '';
+            new bootstrap.Modal(document.getElementById('commentsModal')).show();
+        }
+
+        function saveComments() {
+            const booking = bookings.find(b => b.id === currentCommentId);
+            booking.comments = document.getElementById('commentsText').value;
+            saveData();
+            renderTable();
+            bootstrap.Modal.getInstance(document.getElementById('commentsModal')).hide();
+        }
+
+        function deleteBooking(id) {
+            if (!confirm('Delete this booking?')) return;
+            bookings = bookings.filter(b => b.id !== id);
+            saveData();
+            renderTable();
+        }
+
+        function getFilteredBookings() {
+            const tourCode = document.getElementById('filterTourCode').value.toLowerCase();
+            const country = document.getElementById('filterCountry').value;
+            const city = document.getElementById('filterCity').value;
+            const hotel = document.getElementById('filterHotel').value.toLowerCase();
+            const status = document.getElementById('filterStatus').value;
+
+            return bookings.filter(b => {
+                if (tourCode && !b.tourCode.toLowerCase().includes(tourCode)) return false;
+                if (country && b.country !== country) return false;
+                if (city && b.city !== city) return false;
+                if (hotel && !b.hotelName.toLowerCase().includes(hotel)) return false;
+                if (status && b.status !== status) return false;
+                return true;
+            });
+        }
+
+        function applyFilters() {
+            renderTable();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterTourCode').value = '';
+            document.getElementById('filterCountry').value = '';
+            document.getElementById('filterCity').value = '';
+            document.getElementById('filterHotel').value = '';
+            document.getElementById('filterStatus').value = '';
+            renderTable();
+        }
+
+        function updateStats(filtered) {
+            document.getElementById('statTotal').textContent = filtered.length;
+            
+            const totalRooms = filtered.reduce((sum, b) => {
                 const matches = b.roomsConfig.match(/\d+/g);
                 return sum + (matches ? matches.reduce((a, c) => a + parseInt(c), 0) : 0);
             }, 0);
-            document.getElementById(`rooms-${city}`).textContent = totalRooms;
+            document.getElementById('statRooms').textContent = totalRooms;
             
-            const blocked = cityBookings.filter(b => b.status === 'blocked').length;
-            const confirmed = cityBookings.filter(b => b.status === 'confirmed').length;
-            
-            document.getElementById(`blocked-${city}`).textContent = blocked;
-            document.getElementById(`confirmed-${city}`).textContent = confirmed;
-        }
-
-        function addBooking(city) {
-            editingId = null;
-            document.getElementById('modalTitle').textContent = 'Add Booking';
-            document.getElementById('bookingCity').value = city;
-            document.getElementById('bookingForm').reset();
-            new bootstrap.Modal(document.getElementById('bookingModal')).show();
-        }
-
-        function editBooking(city, id) {
-            const booking = bookings[city].find(b => b.id === id);
-            if (!booking) return;
-
-            editingId = id;
-            document.getElementById('modalTitle').textContent = 'Edit Booking';
-            document.getElementById('bookingCity').value = city;
-            document.getElementById('bookingId').value = id;
-            document.getElementById('hotelName').value = booking.hotelName;
-            document.getElementById('roomsConfig').value = booking.roomsConfig;
-            document.getElementById('checkIn').value = booking.checkIn;
-            document.getElementById('checkOut').value = booking.checkOut;
-            document.getElementById('pricePerPerson').value = booking.pricePerPerson;
-            document.getElementById('status').value = booking.status;
-            document.getElementById('cancellationDeadline').value = booking.cancellationDeadline || '';
-            document.getElementById('paymentDeadline').value = booking.paymentDeadline || '';
-            document.getElementById('notes').value = booking.notes || '';
-
-            new bootstrap.Modal(document.getElementById('bookingModal')).show();
-        }
-
-        function saveBooking() {
-            const city = document.getElementById('bookingCity').value;
-            const booking = {
-                id: editingId || Date.now().toString(),
-                hotelName: document.getElementById('hotelName').value,
-                roomsConfig: document.getElementById('roomsConfig').value,
-                checkIn: document.getElementById('checkIn').value,
-                checkOut: document.getElementById('checkOut').value,
-                pricePerPerson: document.getElementById('pricePerPerson').value,
-                status: document.getElementById('status').value,
-                cancellationDeadline: document.getElementById('cancellationDeadline').value,
-                paymentDeadline: document.getElementById('paymentDeadline').value,
-                notes: document.getElementById('notes').value
-            };
-
-            if (editingId) {
-                const index = bookings[city].findIndex(b => b.id === editingId);
-                bookings[city][index] = booking;
-            } else {
-                if (!bookings[city]) bookings[city] = [];
-                bookings[city].push(booking);
-            }
-
-            saveData();
-            renderCity(city);
-            bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
-        }
-
-        function deleteBooking(city, id) {
-            if (!confirm('Delete this booking?')) return;
-            bookings[city] = bookings[city].filter(b => b.id !== id);
-            saveData();
-            renderCity(city);
+            document.getElementById('statBlocked').textContent = filtered.filter(b => b.status === 'blocked').length;
+            document.getElementById('statConfirmed').textContent = filtered.filter(b => b.status === 'confirmed').length;
+            document.getElementById('statCancellation').textContent = filtered.filter(b => b.status === 'cancellation').length;
+            document.getElementById('statCancelled').textContent = filtered.filter(b => b.status === 'cancelled').length;
         }
 
         function formatDate(dateStr) {
@@ -449,7 +491,7 @@
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `hotel-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.download = `hotel-tracker-${new Date().toISOString().split('T')[0]}.json`;
             link.click();
         }
 
@@ -461,14 +503,14 @@
             reader.onload = function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
-                    if (confirm('This will replace all current data. Continue?')) {
+                    if (confirm('Replace all data with imported file?')) {
                         bookings = imported;
                         saveData();
-                        showCity(currentCity);
-                        alert('Data imported successfully');
+                        renderTable();
+                        alert('Import successful');
                     }
                 } catch (err) {
-                    alert('Invalid file format');
+                    alert('Invalid file');
                 }
             };
             reader.readAsText(file);
