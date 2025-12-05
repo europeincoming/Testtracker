@@ -50,14 +50,20 @@
         td.editable:hover {
             background: #f0f8ff;
         }
+        td.editable.selected {
+            outline: 2px solid #0d6efd;
+            outline-offset: -2px;
+        }
         td.editing {
             padding: 0 !important;
+            background: #e3f2fd !important;
         }
         td.editing input, td.editing select {
             width: 100%;
             border: 2px solid #0d6efd;
             padding: 4px 8px;
             font-size: 13px;
+            box-sizing: border-box;
         }
         .status-blocked { background: #ffc107; color: #000; }
         .status-confirmed { background: #28a745; color: #fff; }
@@ -81,6 +87,10 @@
         .comment-indicator:hover {
             color: #0a58ca;
         }
+        .date-preset-btn {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -101,7 +111,7 @@
         </div>
 
         <div class="filters">
-            <div class="row g-2">
+            <div class="row g-2 mb-2">
                 <div class="col-md-2">
                     <input type="text" class="form-control form-control-sm" id="filterTourCode" placeholder="Tour Code" onkeyup="applyFilters()">
                 </div>
@@ -129,8 +139,27 @@
                 </div>
                 <div class="col-md-2">
                     <button class="btn btn-sm btn-outline-secondary w-100" onclick="clearFilters()">
-                        <i class="bi bi-x-circle"></i> Clear
+                        <i class="bi bi-x-circle"></i> Clear All
                     </button>
+                </div>
+            </div>
+            <div class="row g-2 align-items-center">
+                <div class="col-md-2">
+                    <label class="form-label mb-0 small">Canx Deadline From:</label>
+                    <input type="date" class="form-control form-control-sm" id="filterCanxFrom" onchange="applyFilters()">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label mb-0 small">Canx Deadline To:</label>
+                    <input type="date" class="form-control form-control-sm" id="filterCanxTo" onchange="applyFilters()">
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label mb-0 small">Quick Presets:</label>
+                    <div>
+                        <button class="btn btn-outline-primary date-preset-btn me-1" onclick="setDatePreset(3)">Next 3 Days</button>
+                        <button class="btn btn-outline-primary date-preset-btn me-1" onclick="setDatePreset(7)">Next 7 Days</button>
+                        <button class="btn btn-outline-primary date-preset-btn me-1" onclick="setDatePreset(30)">Next 30 Days</button>
+                        <button class="btn btn-outline-secondary date-preset-btn" onclick="clearDateFilter()">Clear Dates</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -165,7 +194,7 @@
         </div>
 
         <div class="table-container">
-            <table class="table table-sm table-hover table-bordered">
+            <table class="table table-sm table-hover table-bordered" id="mainTable">
                 <thead class="table-light">
                     <tr>
                         <th>Tour Code</th>
@@ -236,14 +265,91 @@
         };
 
         let bookings = [];
-        let currentEditingId = null;
+        let selectedCell = null;
+        let isEditing = false;
         let currentCommentId = null;
 
         document.addEventListener('DOMContentLoaded', function() {
             loadData();
             populateFilters();
             renderTable();
+            setupGlobalKeyListener();
         });
+
+        function setupGlobalKeyListener() {
+            document.addEventListener('keydown', function(e) {
+                // Ignore if typing in filter inputs or modal
+                if (e.target.tagName === 'INPUT' && !e.target.closest('td.editing')) return;
+                if (e.target.tagName === 'TEXTAREA') return;
+                if (e.target.tagName === 'SELECT' && !e.target.closest('td.editing')) return;
+                if (document.querySelector('.modal.show')) return;
+
+                // If editing, handle navigation keys
+                if (isEditing) return;
+
+                // Arrow key navigation
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                    navigateWithArrows(e.key);
+                }
+                // Any other key - start editing
+                else if (selectedCell && !e.ctrlKey && !e.metaKey && e.key.length === 1) {
+                    e.preventDefault();
+                    selectedCell.click();
+                    // The keypress will be captured by the input
+                    setTimeout(() => {
+                        const input = selectedCell.querySelector('input, select');
+                        if (input && input.tagName === 'INPUT') {
+                            input.value = e.key;
+                        }
+                    }, 10);
+                }
+            });
+        }
+
+        function navigateWithArrows(direction) {
+            if (!selectedCell) return;
+
+            const allCells = Array.from(document.querySelectorAll('td.editable'));
+            const currentIndex = allCells.indexOf(selectedCell);
+            if (currentIndex === -1) return;
+
+            const currentRow = selectedCell.parentElement;
+            const rowCells = Array.from(currentRow.querySelectorAll('td.editable'));
+            const cellIndexInRow = rowCells.indexOf(selectedCell);
+
+            let nextCell = null;
+
+            if (direction === 'ArrowLeft') {
+                nextCell = rowCells[cellIndexInRow - 1];
+            } else if (direction === 'ArrowRight') {
+                nextCell = rowCells[cellIndexInRow + 1];
+            } else if (direction === 'ArrowUp') {
+                const prevRow = currentRow.previousElementSibling;
+                if (prevRow) {
+                    const prevRowCells = Array.from(prevRow.querySelectorAll('td.editable'));
+                    nextCell = prevRowCells[cellIndexInRow];
+                }
+            } else if (direction === 'ArrowDown') {
+                const nextRow = currentRow.nextElementSibling;
+                if (nextRow) {
+                    const nextRowCells = Array.from(nextRow.querySelectorAll('td.editable'));
+                    nextCell = nextRowCells[cellIndexInRow];
+                }
+            }
+
+            if (nextCell) {
+                selectCell(nextCell);
+            }
+        }
+
+        function selectCell(cell) {
+            if (selectedCell) {
+                selectedCell.classList.remove('selected');
+            }
+            selectedCell = cell;
+            cell.classList.add('selected');
+        }
 
         function populateFilters() {
             const countrySelect = document.getElementById('filterCountry');
@@ -256,6 +362,22 @@
             Object.values(countries).flat().sort().forEach(city => {
                 citySelect.innerHTML += `<option value="${city}">${city}</option>`;
             });
+        }
+
+        function setDatePreset(days) {
+            const today = new Date();
+            const futureDate = new Date();
+            futureDate.setDate(today.getDate() + days);
+
+            document.getElementById('filterCanxFrom').value = today.toISOString().split('T')[0];
+            document.getElementById('filterCanxTo').value = futureDate.toISOString().split('T')[0];
+            applyFilters();
+        }
+
+        function clearDateFilter() {
+            document.getElementById('filterCanxFrom').value = '';
+            document.getElementById('filterCanxTo').value = '';
+            applyFilters();
         }
 
         function addNewRow() {
@@ -282,11 +404,11 @@
             saveData();
             renderTable();
             
-            // Auto-focus first field after render
+            // Auto-select first field after render
             setTimeout(() => {
-                const firstRow = document.querySelector('tbody tr:first-child td.editable');
-                if (firstRow) {
-                    firstRow.click();
+                const firstCell = document.querySelector('tbody tr:first-child td.editable');
+                if (firstCell) {
+                    selectCell(firstCell);
                 }
             }, 50);
         }
@@ -311,23 +433,23 @@
                 
                 return `
                     <tr class="${isWarning ? 'deadline-warning' : ''}" data-id="${booking.id}">
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'tourCode', 'text')">${booking.tourCode || '-'}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'country', 'select-country')">${booking.country || '-'}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'city', 'select-city')">${booking.city || '-'}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'hotelName', 'text')">${booking.hotelName || '-'}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'checkIn', 'date')">${formatDate(booking.checkIn)}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'checkOut', 'date')">${formatDate(booking.checkOut)}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'roomsConfig', 'text')">${booking.roomsConfig || '-'}</td>
-                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'singlePPPN', 'number')">€${booking.singlePPPN || '-'}</td>
-                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'doublePPPN', 'number')">€${booking.doublePPPN || '-'}</td>
-                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'triplePPPN', 'number')">€${booking.triplePPPN || '-'}</td>
-                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'cwb', 'number')">€${booking.cwb || '-'}</td>
-                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'cnb', 'number')">€${booking.cnb || '-'}</td>
-                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'dinnerCost', 'number')">€${booking.dinnerCost || '-'}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'status', 'select-status')">
+                        <td class="editable" data-field="tourCode" onclick="handleCellClick(this, '${booking.id}', 'tourCode', 'text')">${booking.tourCode || '-'}</td>
+                        <td class="editable" data-field="country" onclick="handleCellClick(this, '${booking.id}', 'country', 'select-country')">${booking.country || '-'}</td>
+                        <td class="editable" data-field="city" onclick="handleCellClick(this, '${booking.id}', 'city', 'select-city')">${booking.city || '-'}</td>
+                        <td class="editable" data-field="hotelName" onclick="handleCellClick(this, '${booking.id}', 'hotelName', 'text')">${booking.hotelName || '-'}</td>
+                        <td class="editable" data-field="checkIn" onclick="handleCellClick(this, '${booking.id}', 'checkIn', 'date')">${formatDate(booking.checkIn)}</td>
+                        <td class="editable" data-field="checkOut" onclick="handleCellClick(this, '${booking.id}', 'checkOut', 'date')">${formatDate(booking.checkOut)}</td>
+                        <td class="editable" data-field="roomsConfig" onclick="handleCellClick(this, '${booking.id}', 'roomsConfig', 'text')">${booking.roomsConfig || '-'}</td>
+                        <td class="editable price-cell" data-field="singlePPPN" onclick="handleCellClick(this, '${booking.id}', 'singlePPPN', 'number')">€${booking.singlePPPN || '-'}</td>
+                        <td class="editable price-cell" data-field="doublePPPN" onclick="handleCellClick(this, '${booking.id}', 'doublePPPN', 'number')">€${booking.doublePPPN || '-'}</td>
+                        <td class="editable price-cell" data-field="triplePPPN" onclick="handleCellClick(this, '${booking.id}', 'triplePPPN', 'number')">€${booking.triplePPPN || '-'}</td>
+                        <td class="editable price-cell" data-field="cwb" onclick="handleCellClick(this, '${booking.id}', 'cwb', 'number')">€${booking.cwb || '-'}</td>
+                        <td class="editable price-cell" data-field="cnb" onclick="handleCellClick(this, '${booking.id}', 'cnb', 'number')">€${booking.cnb || '-'}</td>
+                        <td class="editable price-cell" data-field="dinnerCost" onclick="handleCellClick(this, '${booking.id}', 'dinnerCost', 'number')">€${booking.dinnerCost || '-'}</td>
+                        <td class="editable" data-field="status" onclick="handleCellClick(this, '${booking.id}', 'status', 'select-status')">
                             <span class="badge status-${booking.status}">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>
                         </td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'cancellationDeadline', 'date')">${formatDate(booking.cancellationDeadline)}</td>
+                        <td class="editable" data-field="cancellationDeadline" onclick="handleCellClick(this, '${booking.id}', 'cancellationDeadline', 'date')">${formatDate(booking.cancellationDeadline)}</td>
                         <td class="text-center">
                             <i class="bi bi-chat-square-text comment-indicator ${hasComments ? 'text-primary' : 'text-muted'}" 
                                onclick="openComments('${booking.id}')"></i>
@@ -344,25 +466,31 @@
             updateStats(filteredBookings);
         }
 
+        function handleCellClick(cell, id, field, type) {
+            selectCell(cell);
+            editCell(cell, id, field, type);
+        }
+
         function editCell(cell, id, field, type) {
-            if (currentEditingId) return; // One edit at a time
+            if (isEditing) return;
             
-            currentEditingId = id;
+            isEditing = true;
             const booking = bookings.find(b => b.id === id);
             const currentValue = booking[field] || '';
             
             cell.classList.add('editing');
+            cell.classList.remove('selected');
             
             let inputHTML = '';
             if (type === 'text') {
-                inputHTML = `<input type="text" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" autofocus>`;
+                inputHTML = `<input type="text" value="${currentValue}" data-id="${id}" data-field="${field}">`;
             } else if (type === 'date') {
-                inputHTML = `<input type="date" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" autofocus>`;
+                inputHTML = `<input type="date" value="${currentValue}" data-id="${id}" data-field="${field}">`;
             } else if (type === 'number') {
-                inputHTML = `<input type="number" step="0.01" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" autofocus>`;
+                inputHTML = `<input type="number" step="0.01" value="${currentValue}" data-id="${id}" data-field="${field}">`;
             } else if (type === 'select-status') {
                 inputHTML = `
-                    <select onblur="saveCell(this, '${id}', '${field}')" onchange="saveCell(this, '${id}', '${field}')" autofocus>
+                    <select data-id="${id}" data-field="${field}">
                         <option value="blocked" ${currentValue === 'blocked' ? 'selected' : ''}>Blocked</option>
                         <option value="confirmed" ${currentValue === 'confirmed' ? 'selected' : ''}>Confirmed</option>
                         <option value="cancellation" ${currentValue === 'cancellation' ? 'selected' : ''}>Cancellation</option>
@@ -371,7 +499,7 @@
                 `;
             } else if (type === 'select-country') {
                 inputHTML = `
-                    <select onblur="saveCell(this, '${id}', '${field}')" onchange="saveCell(this, '${id}', '${field}')" autofocus>
+                    <select data-id="${id}" data-field="${field}">
                         <option value="">-</option>
                         ${Object.keys(countries).sort().map(c => 
                             `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
@@ -380,7 +508,7 @@
                 `;
             } else if (type === 'select-city') {
                 inputHTML = `
-                    <select onblur="saveCell(this, '${id}', '${field}')" onchange="saveCell(this, '${id}', '${field}')" autofocus>
+                    <select data-id="${id}" data-field="${field}">
                         <option value="">-</option>
                         ${Object.values(countries).flat().sort().map(c => 
                             `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
@@ -390,16 +518,83 @@
             }
             
             cell.innerHTML = inputHTML;
-            cell.querySelector('input, select').focus();
+            const input = cell.querySelector('input, select');
+            input.focus();
+
+            // Setup event listeners
+            input.addEventListener('blur', function() {
+                saveAndExit(this);
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveAndExit(this);
+                } else if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const moveBackward = e.shiftKey;
+                    saveAndNavigate(this, moveBackward);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelEdit(cell);
+                }
+            });
+
+            // For selects, auto-save on change
+            if (input.tagName === 'SELECT') {
+                input.addEventListener('change', function() {
+                    saveAndExit(this);
+                });
+            }
         }
 
-        function saveCell(input, id, field) {
+        function saveAndExit(input) {
+            const id = input.dataset.id;
+            const field = input.dataset.field;
             const value = input.value;
+            
             const booking = bookings.find(b => b.id === id);
             booking[field] = value;
             
-            currentEditingId = null;
             saveData();
+            isEditing = false;
+            renderTable();
+        }
+
+        function saveAndNavigate(input, backward = false) {
+            const id = input.dataset.id;
+            const field = input.dataset.field;
+            const value = input.value;
+            
+            const booking = bookings.find(b => b.id === id);
+            booking[field] = value;
+            
+            saveData();
+            isEditing = false;
+
+            const cell = input.closest('td');
+            const row = cell.parentElement;
+            const rowCells = Array.from(row.querySelectorAll('td.editable'));
+            const currentIndex = rowCells.indexOf(cell);
+            
+            const nextIndex = backward ? currentIndex - 1 : currentIndex + 1;
+            
+            renderTable();
+
+            setTimeout(() => {
+                const newRow = document.querySelector(`tr[data-id="${id}"]`);
+                if (newRow) {
+                    const newRowCells = Array.from(newRow.querySelectorAll('td.editable'));
+                    const nextCell = newRowCells[nextIndex];
+                    if (nextCell) {
+                        nextCell.click();
+                    }
+                }
+            }, 50);
+        }
+
+        function cancelEdit(cell) {
+            isEditing = false;
             renderTable();
         }
 
@@ -431,6 +626,8 @@
             const city = document.getElementById('filterCity').value;
             const hotel = document.getElementById('filterHotel').value.toLowerCase();
             const status = document.getElementById('filterStatus').value;
+            const canxFrom = document.getElementById('filterCanxFrom').value;
+            const canxTo = document.getElementById('filterCanxTo').value;
 
             return bookings.filter(b => {
                 if (tourCode && !b.tourCode.toLowerCase().includes(tourCode)) return false;
@@ -438,6 +635,15 @@
                 if (city && b.city !== city) return false;
                 if (hotel && !b.hotelName.toLowerCase().includes(hotel)) return false;
                 if (status && b.status !== status) return false;
+                
+                // Date range filter
+                if (canxFrom || canxTo) {
+                    if (!b.cancellationDeadline) return false;
+                    const deadline = new Date(b.cancellationDeadline);
+                    if (canxFrom && deadline < new Date(canxFrom)) return false;
+                    if (canxTo && deadline > new Date(canxTo)) return false;
+                }
+                
                 return true;
             });
         }
@@ -452,7 +658,7 @@
             document.getElementById('filterCity').value = '';
             document.getElementById('filterHotel').value = '';
             document.getElementById('filterStatus').value = '';
-            renderTable();
+            clearDateFilter();
         }
 
         function updateStats(filtered) {
