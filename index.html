@@ -259,29 +259,37 @@
         }
 
         function addNewRow() {
-            const newBooking = {
-                id: Date.now().toString(),
-                tourCode: '',
-                country: '',
-                city: '',
-                hotelName: '',
-                checkIn: '',
-                checkOut: '',
-                roomsConfig: '',
-                singlePPPN: '',
-                doublePPPN: '',
-                triplePPPN: '',
-                cwb: '',
-                cnb: '',
-                dinnerCost: '',
-                status: 'blocked',
-                cancellationDeadline: '',
-                comments: ''
-            };
-            bookings.unshift(newBooking);
-            saveData();
-            renderTable();
+    const newBooking = {
+        id: Date.now().toString(),
+        tourCode: '',
+        country: '',
+        city: '',
+        hotelName: '',
+        checkIn: '',
+        checkOut: '',
+        roomsConfig: '',
+        singlePPPN: '',
+        doublePPPN: '',
+        triplePPPN: '',
+        cwb: '',
+        cnb: '',
+        dinnerCost: '',
+        status: 'blocked',
+        cancellationDeadline: '',
+        comments: ''
+    };
+    bookings.unshift(newBooking);
+    saveData();
+    renderTable();
+    
+    // Auto-focus first field after render
+    setTimeout(() => {
+        const firstRow = document.querySelector('tbody tr:first-child td.editable');
+        if (firstRow) {
+            firstRow.click();
         }
+    }, 50);
+}
 
         function renderTable() {
             const tbody = document.getElementById('mainTableBody');
@@ -336,60 +344,94 @@
             updateStats(filteredBookings);
         }
 
-        function editCell(cell, id, field, type) {
-            if (currentEditingId) return; // One edit at a time
-            
-            currentEditingId = id;
-            const booking = bookings.find(b => b.id === id);
-            const currentValue = booking[field] || '';
-            
-            cell.classList.add('editing');
-            
-            let inputHTML = '';
-            if (type === 'text') {
-                inputHTML = `<input type="text" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeypress="handleKeyPress(event, this, '${id}', '${field}')" autofocus>`;
-            } else if (type === 'date') {
-                inputHTML = `<input type="date" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeypress="handleKeyPress(event, this, '${id}', '${field}')" autofocus>`;
-            } else if (type === 'number') {
-                inputHTML = `<input type="number" step="0.01" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeypress="handleKeyPress(event, this, '${id}', '${field}')" autofocus>`;
-            } else if (type === 'select-status') {
-                inputHTML = `
-                    <select onblur="saveCell(this, '${id}', '${field}')" onchange="saveCell(this, '${id}', '${field}')" autofocus>
-                        <option value="blocked" ${currentValue === 'blocked' ? 'selected' : ''}>Blocked</option>
-                        <option value="confirmed" ${currentValue === 'confirmed' ? 'selected' : ''}>Confirmed</option>
-                        <option value="cancellation" ${currentValue === 'cancellation' ? 'selected' : ''}>Cancellation</option>
-                        <option value="cancelled" ${currentValue === 'cancelled' ? 'selected' : ''}>Cancelled</option>
-                    </select>
-                `;
-            } else if (type === 'select-country') {
-                inputHTML = `
-                    <select onblur="saveCell(this, '${id}', '${field}')" onchange="saveCell(this, '${id}', '${field}')" autofocus>
-                        <option value="">-</option>
-                        ${Object.keys(countries).sort().map(c => 
-                            `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
-                        ).join('')}
-                    </select>
-                `;
-            } else if (type === 'select-city') {
-                inputHTML = `
-                    <select onblur="saveCell(this, '${id}', '${field}')" onchange="saveCell(this, '${id}', '${field}')" autofocus>
-                        <option value="">-</option>
-                        ${Object.values(countries).flat().sort().map(c => 
-                            `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
-                        ).join('')}
-                    </select>
-                `;
-            }
-            
-            cell.innerHTML = inputHTML;
-            cell.querySelector('input, select').focus();
-        }
+       function editCell(cell, id, field, type) {
+    if (currentEditingId) return;
+    
+    currentEditingId = id;
+    const booking = bookings.find(b => b.id === id);
+    const currentValue = booking[field] || '';
+    
+    cell.classList.add('editing');
+    
+    let inputHTML = '';
+    if (type === 'text') {
+        inputHTML = `<input type="text" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>`;
+    } else if (type === 'date') {
+        inputHTML = `<input type="date" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>`;
+    } else if (type === 'number') {
+        inputHTML = `<input type="number" step="0.01" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>`;
+    } else if (type === 'select-status') {
+        inputHTML = `
+            <select onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>
+                <option value="blocked" ${currentValue === 'blocked' ? 'selected' : ''}>Blocked</option>
+                <option value="confirmed" ${currentValue === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                <option value="cancellation" ${currentValue === 'cancellation' ? 'selected' : ''}>Cancellation</option>
+                <option value="cancelled" ${currentValue === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+            </select>
+        `;
+    } else if (type === 'select-country') {
+        inputHTML = `
+            <select onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>
+                <option value="">-</option>
+                ${Object.keys(countries).sort().map(c => 
+                    `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
+                ).join('')}
+            </select>
+        `;
+    } else if (type === 'select-city') {
+        inputHTML = `
+            <select onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>
+                <option value="">-</option>
+                ${Object.values(countries).flat().sort().map(c => 
+                    `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
+                ).join('')}
+            </select>
+        `;
+    }
+    
+    cell.innerHTML = inputHTML;
+    cell.querySelector('input, select').focus();
+}
+        function handleKeyDown(event, input, id, field) {
+    if (event.key === 'Enter' || event.key === 'Tab') {
+        event.preventDefault();
+        saveCell(input, id, field);
+        moveToNextField(event.shiftKey);
+    } else if (event.key === 'Escape') {
+        currentEditingId = null;
+        renderTable();
+    }
+}
 
-        function handleKeyPress(event, input, id, field) {
-            if (event.key === 'Enter') {
-                saveCell(input, id, field);
+function moveToNextField(backwards = false) {
+    setTimeout(() => {
+        const editableCells = Array.from(document.querySelectorAll('td.editable'));
+        const currentIndex = editableCells.findIndex(cell => 
+            cell.parentElement.dataset.id === currentEditingId
+        );
+        
+        if (currentIndex === -1) {
+            // Find next row's first cell
+            const allRows = Array.from(document.querySelectorAll('tbody tr'));
+            const nextRow = allRows[0];
+            if (nextRow) {
+                const firstCell = nextRow.querySelector('td.editable');
+                if (firstCell) firstCell.click();
             }
+            return;
         }
+        
+        const currentRow = editableCells[currentIndex].parentElement;
+        const rowCells = Array.from(currentRow.querySelectorAll('td.editable'));
+        const cellIndexInRow = rowCells.indexOf(editableCells[currentIndex]);
+        
+        const nextIndex = backwards ? cellIndexInRow - 1 : cellIndexInRow + 1;
+        
+        if (nextIndex >= 0 && nextIndex < rowCells.length) {
+            rowCells[nextIndex].click();
+        }
+    }, 50);
+}
 
         function saveCell(input, id, field) {
             const value = input.value;
