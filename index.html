@@ -52,6 +52,7 @@
         }
         td.editing {
             padding: 0 !important;
+            background: #e3f2fd !important;
         }
         td.editing input, td.editing select {
             width: 100%;
@@ -237,6 +238,7 @@
 
         let bookings = [];
         let currentEditingId = null;
+        let currentEditingCell = null;
         let currentCommentId = null;
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -259,37 +261,37 @@
         }
 
         function addNewRow() {
-    const newBooking = {
-        id: Date.now().toString(),
-        tourCode: '',
-        country: '',
-        city: '',
-        hotelName: '',
-        checkIn: '',
-        checkOut: '',
-        roomsConfig: '',
-        singlePPPN: '',
-        doublePPPN: '',
-        triplePPPN: '',
-        cwb: '',
-        cnb: '',
-        dinnerCost: '',
-        status: 'blocked',
-        cancellationDeadline: '',
-        comments: ''
-    };
-    bookings.unshift(newBooking);
-    saveData();
-    renderTable();
-    
-    // Auto-focus first field after render
-    setTimeout(() => {
-        const firstRow = document.querySelector('tbody tr:first-child td.editable');
-        if (firstRow) {
-            firstRow.click();
+            const newBooking = {
+                id: Date.now().toString(),
+                tourCode: '',
+                country: '',
+                city: '',
+                hotelName: '',
+                checkIn: '',
+                checkOut: '',
+                roomsConfig: '',
+                singlePPPN: '',
+                doublePPPN: '',
+                triplePPPN: '',
+                cwb: '',
+                cnb: '',
+                dinnerCost: '',
+                status: 'blocked',
+                cancellationDeadline: '',
+                comments: ''
+            };
+            bookings.unshift(newBooking);
+            saveData();
+            renderTable();
+            
+            // Auto-focus first field after render
+            setTimeout(() => {
+                const firstRow = document.querySelector('tbody tr:first-child td.editable');
+                if (firstRow) {
+                    firstRow.click();
+                }
+            }, 50);
         }
-    }, 50);
-}
 
         function renderTable() {
             const tbody = document.getElementById('mainTableBody');
@@ -311,23 +313,23 @@
                 
                 return `
                     <tr class="${isWarning ? 'deadline-warning' : ''}" data-id="${booking.id}">
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'tourCode', 'text')">${booking.tourCode || '-'}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'country', 'select-country')">${booking.country || '-'}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'city', 'select-city')">${booking.city || '-'}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'hotelName', 'text')">${booking.hotelName || '-'}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'checkIn', 'date')">${formatDate(booking.checkIn)}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'checkOut', 'date')">${formatDate(booking.checkOut)}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'roomsConfig', 'text')">${booking.roomsConfig || '-'}</td>
-                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'singlePPPN', 'number')">€${booking.singlePPPN || '-'}</td>
-                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'doublePPPN', 'number')">€${booking.doublePPPN || '-'}</td>
-                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'triplePPPN', 'number')">€${booking.triplePPPN || '-'}</td>
-                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'cwb', 'number')">€${booking.cwb || '-'}</td>
-                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'cnb', 'number')">€${booking.cnb || '-'}</td>
-                        <td class="editable price-cell" onclick="editCell(this, '${booking.id}', 'dinnerCost', 'number')">€${booking.dinnerCost || '-'}</td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'status', 'select-status')">
+                        <td class="editable" data-field="tourCode" onclick="editCell(this, '${booking.id}', 'tourCode', 'text')">${booking.tourCode || '-'}</td>
+                        <td class="editable" data-field="country" onclick="editCell(this, '${booking.id}', 'country', 'select-country')">${booking.country || '-'}</td>
+                        <td class="editable" data-field="city" onclick="editCell(this, '${booking.id}', 'city', 'select-city')">${booking.city || '-'}</td>
+                        <td class="editable" data-field="hotelName" onclick="editCell(this, '${booking.id}', 'hotelName', 'text')">${booking.hotelName || '-'}</td>
+                        <td class="editable" data-field="checkIn" onclick="editCell(this, '${booking.id}', 'checkIn', 'date')">${formatDate(booking.checkIn)}</td>
+                        <td class="editable" data-field="checkOut" onclick="editCell(this, '${booking.id}', 'checkOut', 'date')">${formatDate(booking.checkOut)}</td>
+                        <td class="editable" data-field="roomsConfig" onclick="editCell(this, '${booking.id}', 'roomsConfig', 'text')">${booking.roomsConfig || '-'}</td>
+                        <td class="editable price-cell" data-field="singlePPPN" onclick="editCell(this, '${booking.id}', 'singlePPPN', 'number')">€${booking.singlePPPN || '-'}</td>
+                        <td class="editable price-cell" data-field="doublePPPN" onclick="editCell(this, '${booking.id}', 'doublePPPN', 'number')">€${booking.doublePPPN || '-'}</td>
+                        <td class="editable price-cell" data-field="triplePPPN" onclick="editCell(this, '${booking.id}', 'triplePPPN', 'number')">€${booking.triplePPPN || '-'}</td>
+                        <td class="editable price-cell" data-field="cwb" onclick="editCell(this, '${booking.id}', 'cwb', 'number')">€${booking.cwb || '-'}</td>
+                        <td class="editable price-cell" data-field="cnb" onclick="editCell(this, '${booking.id}', 'cnb', 'number')">€${booking.cnb || '-'}</td>
+                        <td class="editable price-cell" data-field="dinnerCost" onclick="editCell(this, '${booking.id}', 'dinnerCost', 'number')">€${booking.dinnerCost || '-'}</td>
+                        <td class="editable" data-field="status" onclick="editCell(this, '${booking.id}', 'status', 'select-status')">
                             <span class="badge status-${booking.status}">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>
                         </td>
-                        <td class="editable" onclick="editCell(this, '${booking.id}', 'cancellationDeadline', 'date')">${formatDate(booking.cancellationDeadline)}</td>
+                        <td class="editable" data-field="cancellationDeadline" onclick="editCell(this, '${booking.id}', 'cancellationDeadline', 'date')">${formatDate(booking.cancellationDeadline)}</td>
                         <td class="text-center">
                             <i class="bi bi-chat-square-text comment-indicator ${hasComments ? 'text-primary' : 'text-muted'}" 
                                onclick="openComments('${booking.id}')"></i>
@@ -344,103 +346,111 @@
             updateStats(filteredBookings);
         }
 
-       function editCell(cell, id, field, type) {
-    if (currentEditingId) return;
-    
-    currentEditingId = id;
-    const booking = bookings.find(b => b.id === id);
-    const currentValue = booking[field] || '';
-    
-    cell.classList.add('editing');
-    
-    let inputHTML = '';
-    if (type === 'text') {
-        inputHTML = `<input type="text" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>`;
-    } else if (type === 'date') {
-        inputHTML = `<input type="date" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>`;
-    } else if (type === 'number') {
-        inputHTML = `<input type="number" step="0.01" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>`;
-    } else if (type === 'select-status') {
-        inputHTML = `
-            <select onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>
-                <option value="blocked" ${currentValue === 'blocked' ? 'selected' : ''}>Blocked</option>
-                <option value="confirmed" ${currentValue === 'confirmed' ? 'selected' : ''}>Confirmed</option>
-                <option value="cancellation" ${currentValue === 'cancellation' ? 'selected' : ''}>Cancellation</option>
-                <option value="cancelled" ${currentValue === 'cancelled' ? 'selected' : ''}>Cancelled</option>
-            </select>
-        `;
-    } else if (type === 'select-country') {
-        inputHTML = `
-            <select onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>
-                <option value="">-</option>
-                ${Object.keys(countries).sort().map(c => 
-                    `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
-                ).join('')}
-            </select>
-        `;
-    } else if (type === 'select-city') {
-        inputHTML = `
-            <select onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>
-                <option value="">-</option>
-                ${Object.values(countries).flat().sort().map(c => 
-                    `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
-                ).join('')}
-            </select>
-        `;
-    }
-    
-    cell.innerHTML = inputHTML;
-    cell.querySelector('input, select').focus();
-}
-        function handleKeyDown(event, input, id, field) {
-    if (event.key === 'Enter' || event.key === 'Tab') {
-        event.preventDefault();
-        saveCell(input, id, field);
-        moveToNextField(event.shiftKey);
-    } else if (event.key === 'Escape') {
-        currentEditingId = null;
-        renderTable();
-    }
-}
-
-function moveToNextField(backwards = false) {
-    setTimeout(() => {
-        const editableCells = Array.from(document.querySelectorAll('td.editable'));
-        const currentIndex = editableCells.findIndex(cell => 
-            cell.parentElement.dataset.id === currentEditingId
-        );
-        
-        if (currentIndex === -1) {
-            // Find next row's first cell
-            const allRows = Array.from(document.querySelectorAll('tbody tr'));
-            const nextRow = allRows[0];
-            if (nextRow) {
-                const firstCell = nextRow.querySelector('td.editable');
-                if (firstCell) firstCell.click();
+        function editCell(cell, id, field, type) {
+            if (currentEditingId && currentEditingId !== id) return;
+            if (currentEditingCell && currentEditingCell !== cell) return;
+            
+            currentEditingId = id;
+            currentEditingCell = cell;
+            const booking = bookings.find(b => b.id === id);
+            const currentValue = booking[field] || '';
+            
+            cell.classList.add('editing');
+            
+            let inputHTML = '';
+            if (type === 'text') {
+                inputHTML = `<input type="text" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>`;
+            } else if (type === 'date') {
+                inputHTML = `<input type="date" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>`;
+            } else if (type === 'number') {
+                inputHTML = `<input type="number" step="0.01" value="${currentValue}" onblur="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>`;
+            } else if (type === 'select-status') {
+                inputHTML = `
+                    <select onblur="saveCell(this, '${id}', '${field}')" onchange="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>
+                        <option value="blocked" ${currentValue === 'blocked' ? 'selected' : ''}>Blocked</option>
+                        <option value="confirmed" ${currentValue === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                        <option value="cancellation" ${currentValue === 'cancellation' ? 'selected' : ''}>Cancellation</option>
+                        <option value="cancelled" ${currentValue === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                    </select>
+                `;
+            } else if (type === 'select-country') {
+                inputHTML = `
+                    <select onblur="saveCell(this, '${id}', '${field}')" onchange="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>
+                        <option value="">-</option>
+                        ${Object.keys(countries).sort().map(c => 
+                            `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
+                        ).join('')}
+                    </select>
+                `;
+            } else if (type === 'select-city') {
+                inputHTML = `
+                    <select onblur="saveCell(this, '${id}', '${field}')" onchange="saveCell(this, '${id}', '${field}')" onkeydown="handleKeyDown(event, this, '${id}', '${field}')" autofocus>
+                        <option value="">-</option>
+                        ${Object.values(countries).flat().sort().map(c => 
+                            `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
+                        ).join('')}
+                    </select>
+                `;
             }
-            return;
+            
+            cell.innerHTML = inputHTML;
+            cell.querySelector('input, select').focus();
         }
-        
-        const currentRow = editableCells[currentIndex].parentElement;
-        const rowCells = Array.from(currentRow.querySelectorAll('td.editable'));
-        const cellIndexInRow = rowCells.indexOf(editableCells[currentIndex]);
-        
-        const nextIndex = backwards ? cellIndexInRow - 1 : cellIndexInRow + 1;
-        
-        if (nextIndex >= 0 && nextIndex < rowCells.length) {
-            rowCells[nextIndex].click();
+
+        function handleKeyDown(event, input, id, field) {
+            if (event.key === 'Enter' || event.key === 'Tab') {
+                event.preventDefault();
+                saveCell(input, id, field);
+                moveToNextField(event.shiftKey);
+            } else if (event.key === 'Escape') {
+                currentEditingId = null;
+                currentEditingCell = null;
+                renderTable();
+            }
         }
-    }, 50);
-}
+
+        function moveToNextField(backwards = false) {
+            const currentRow = document.querySelector(`tr[data-id="${currentEditingId}"]`);
+            if (!currentRow) {
+                currentEditingId = null;
+                currentEditingCell = null;
+                return;
+            }
+            
+            const rowCells = Array.from(currentRow.querySelectorAll('td.editable'));
+            const currentIndex = rowCells.indexOf(currentEditingCell);
+            
+            if (currentIndex === -1) {
+                currentEditingId = null;
+                currentEditingCell = null;
+                return;
+            }
+            
+            const nextIndex = backwards ? currentIndex - 1 : currentIndex + 1;
+            
+            if (nextIndex >= 0 && nextIndex < rowCells.length) {
+                setTimeout(() => {
+                    rowCells[nextIndex].click();
+                }, 50);
+            } else {
+                currentEditingId = null;
+                currentEditingCell = null;
+            }
+        }
 
         function saveCell(input, id, field) {
             const value = input.value;
             const booking = bookings.find(b => b.id === id);
             booking[field] = value;
             
-            currentEditingId = null;
             saveData();
-            renderTable();
+            
+            // Don't clear editing state here - let moveToNextField handle it
+            if (!event || (event.type === 'blur' && event.relatedTarget?.tagName !== 'INPUT' && event.relatedTarget?.tagName !== 'SELECT')) {
+                currentEditingId = null;
+                currentEditingCell = null;
+                renderTable();
+            }
         }
 
         function openComments(id) {
