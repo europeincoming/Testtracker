@@ -7,8 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body { 
-            padding: 20px; 
+        body {
+            padding: 20px;
             background: #f8f9fa;
             font-size: 14px;
         }
@@ -26,11 +26,29 @@
             margin-bottom: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        .filters.active {
+            border-left: 4px solid #0d6efd;
+            background: #f0f8ff;
+        }
+        .filter-active-badge {
+            display: inline-block;
+            background: #0d6efd;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-left: 10px;
+        }
         .stats-row {
             background: #e7f3ff;
             padding: 10px 15px;
             border-radius: 6px;
             margin-bottom: 15px;
+        }
+        .stats-label-info {
+            font-size: 12px;
+            color: #666;
+            margin-left: 10px;
         }
         .table-container {
             background: white;
@@ -42,6 +60,18 @@
         table {
             font-size: 13px;
             white-space: nowrap;
+        }
+        th {
+            cursor: pointer;
+            user-select: none;
+            padding: 8px !important;
+        }
+        th:hover {
+            background: #f0f8ff;
+        }
+        th .sort-indicator {
+            margin-left: 5px;
+            font-size: 11px;
         }
         td.editable {
             cursor: pointer;
@@ -65,11 +95,33 @@
             font-size: 13px;
             box-sizing: border-box;
         }
+        .save-feedback {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-size: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
         .status-blocked { background: #ffc107; color: #000; }
         .status-confirmed { background: #28a745; color: #fff; }
         .status-cancellation { background: #ff9800; color: #fff; }
         .status-cancelled { background: #dc3545; color: #fff; }
-        .deadline-warning { 
+        .deadline-warning {
             background-color: #fff3cd !important;
         }
         .btn-sm {
@@ -91,13 +143,21 @@
             font-size: 0.75rem;
             padding: 0.2rem 0.5rem;
         }
+        .keyboard-shortcut-hint {
+            font-size: 11px;
+            color: #999;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="header-section">
             <div class="d-flex justify-content-between align-items-center">
-                <h3>Hotel Blocking Tracker</h3>
+                <div>
+                    <h3>Hotel Blocking Tracker</h3>
+                    <small class="keyboard-shortcut-hint"><kbd>Ctrl</kbd>+<kbd>N</kbd> to add booking</small>
+                </div>
                 <div>
                     <button class="btn btn-success btn-sm" onclick="exportData()">
                         <i class="bi bi-download"></i> Export
@@ -110,26 +170,26 @@
             </div>
         </div>
 
-        <div class="filters">
+        <div class="filters" id="filtersContainer">
             <div class="row g-2 mb-2">
                 <div class="col-md-2">
-                    <input type="text" class="form-control form-control-sm" id="filterTourCode" placeholder="Tour Code" onkeyup="applyFilters()">
+                    <input type="text" class="form-control form-control-sm" id="filterTourCode" placeholder="Tour Code">
                 </div>
                 <div class="col-md-2">
-                    <select class="form-select form-select-sm" id="filterCountry" onchange="applyFilters()">
+                    <select class="form-select form-select-sm" id="filterCountry">
                         <option value="">All Countries</option>
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <select class="form-select form-select-sm" id="filterCity" onchange="applyFilters()">
+                    <select class="form-select form-select-sm" id="filterCity">
                         <option value="">All Cities</option>
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <input type="text" class="form-control form-control-sm" id="filterHotel" placeholder="Hotel Name" onkeyup="applyFilters()">
+                    <input type="text" class="form-control form-control-sm" id="filterHotel" placeholder="Hotel Name">
                 </div>
                 <div class="col-md-2">
-                    <select class="form-select form-select-sm" id="filterStatus" onchange="applyFilters()">
+                    <select class="form-select form-select-sm" id="filterStatus">
                         <option value="">All Status</option>
                         <option value="blocked">Blocked</option>
                         <option value="confirmed">Confirmed</option>
@@ -146,11 +206,11 @@
             <div class="row g-2 align-items-center">
                 <div class="col-md-2">
                     <label class="form-label mb-0 small">Canx Deadline From:</label>
-                    <input type="date" class="form-control form-control-sm" id="filterCanxFrom" onchange="applyFilters()">
+                    <input type="date" class="form-control form-control-sm" id="filterCanxFrom">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label mb-0 small">Canx Deadline To:</label>
-                    <input type="date" class="form-control form-control-sm" id="filterCanxTo" onchange="applyFilters()">
+                    <input type="date" class="form-control form-control-sm" id="filterCanxTo">
                 </div>
                 <div class="col-md-8">
                     <label class="form-label mb-0 small">Quick Presets:</label>
@@ -167,7 +227,7 @@
         <div class="stats-row">
             <div class="row text-center">
                 <div class="col">
-                    <strong>Total Bookings:</strong> <span id="statTotal">0</span>
+                    <strong><span id="statTotalLabel">Total Bookings</span>:</strong> <span id="statTotal">0</span><span class="stats-label-info" id="statTotalInfo"></span>
                 </div>
                 <div class="col">
                     <strong>Total Rooms:</strong> <span id="statRooms">0</span>
@@ -197,21 +257,21 @@
             <table class="table table-sm table-hover table-bordered" id="mainTable">
                 <thead class="table-light">
                     <tr>
-                        <th>Tour Code</th>
-                        <th>Country</th>
-                        <th>City</th>
-                        <th>Hotel</th>
-                        <th>Check-in</th>
-                        <th>Check-out</th>
-                        <th>Rooms Config</th>
-                        <th>Single PPPN</th>
-                        <th>Double PPPN</th>
-                        <th>Triple PPPN</th>
-                        <th>CWB</th>
-                        <th>CNB</th>
-                        <th>Dinner Cost</th>
-                        <th>Status</th>
-                        <th>Canx Deadline</th>
+                        <th onclick="sortByColumn('tourCode')">Tour Code <span class="sort-indicator" data-column="tourCode"></span></th>
+                        <th onclick="sortByColumn('country')">Country <span class="sort-indicator" data-column="country"></span></th>
+                        <th onclick="sortByColumn('city')">City <span class="sort-indicator" data-column="city"></span></th>
+                        <th onclick="sortByColumn('hotelName')">Hotel <span class="sort-indicator" data-column="hotelName"></span></th>
+                        <th onclick="sortByColumn('checkIn')">Check-in <span class="sort-indicator" data-column="checkIn"></span></th>
+                        <th onclick="sortByColumn('checkOut')">Check-out <span class="sort-indicator" data-column="checkOut"></span></th>
+                        <th onclick="sortByColumn('roomsConfig')">Rooms Config <span class="sort-indicator" data-column="roomsConfig"></span></th>
+                        <th onclick="sortByColumn('singlePPPN')">Single PPPN <span class="sort-indicator" data-column="singlePPPN"></span></th>
+                        <th onclick="sortByColumn('doublePPPN')">Double PPPN <span class="sort-indicator" data-column="doublePPPN"></span></th>
+                        <th onclick="sortByColumn('triplePPPN')">Triple PPPN <span class="sort-indicator" data-column="triplePPPN"></span></th>
+                        <th onclick="sortByColumn('cwb')">CWB <span class="sort-indicator" data-column="cwb"></span></th>
+                        <th onclick="sortByColumn('cnb')">CNB <span class="sort-indicator" data-column="cnb"></span></th>
+                        <th onclick="sortByColumn('dinnerCost')">Dinner Cost <span class="sort-indicator" data-column="dinnerCost"></span></th>
+                        <th onclick="sortByColumn('status')">Status <span class="sort-indicator" data-column="status"></span></th>
+                        <th onclick="sortByColumn('cancellationDeadline')">Canx Deadline <span class="sort-indicator" data-column="cancellationDeadline"></span></th>
                         <th>Comments</th>
                         <th>Actions</th>
                     </tr>
@@ -268,16 +328,79 @@
         let selectedCell = null;
         let isEditing = false;
         let currentCommentId = null;
+        let currentSort = { column: null, ascending: true };
+        let filterDebounceTimer = null;
+        let modalInstance = null;
+        let currentExportUrl = null;
 
         document.addEventListener('DOMContentLoaded', function() {
             loadData();
             populateFilters();
             renderTable();
             setupGlobalKeyListener();
+            setupFilterListeners();
+            initializeModal();
         });
+
+        function initializeModal() {
+            const modalElement = document.getElementById('commentsModal');
+            modalInstance = new bootstrap.Modal(modalElement);
+        }
+
+        function setupFilterListeners() {
+            const filterInputs = [
+                'filterTourCode', 'filterCountry', 'filterCity', 'filterHotel',
+                'filterStatus', 'filterCanxFrom', 'filterCanxTo'
+            ];
+
+            filterInputs.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('input', debounceFilter);
+                    element.addEventListener('change', debounceFilter);
+                }
+            });
+
+            // Country change updates city options
+            document.getElementById('filterCountry').addEventListener('change', updateCityOptions);
+        }
+
+        function debounceFilter() {
+            clearTimeout(filterDebounceTimer);
+            filterDebounceTimer = setTimeout(() => {
+                applyFilters();
+            }, 300);
+        }
+
+        function updateCityOptions() {
+            const country = document.getElementById('filterCountry').value;
+            const citySelect = document.getElementById('filterCity');
+            const currentCity = citySelect.value;
+
+            if (!country) {
+                // Show all cities
+                const allCities = Object.values(countries).flat().sort();
+                citySelect.innerHTML = '<option value="">All Cities</option>' +
+                    allCities.map(c => `<option value="${c}">${escapeHtml(c)}</option>`).join('');
+            } else {
+                // Show only cities from selected country
+                const cities = countries[country] || [];
+                citySelect.innerHTML = '<option value="">All Cities</option>' +
+                    cities.map(c => `<option value="${c}">${escapeHtml(c)}</option>`).join('');
+            }
+
+            citySelect.value = currentCity;
+        }
 
         function setupGlobalKeyListener() {
             document.addEventListener('keydown', function(e) {
+                // Ctrl+N to add new booking
+                if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                    e.preventDefault();
+                    addNewRow();
+                    return;
+                }
+
                 // Ignore if typing in filter inputs or modal
                 if (e.target.tagName === 'INPUT' && !e.target.closest('td.editing')) return;
                 if (e.target.tagName === 'TEXTAREA') return;
@@ -296,7 +419,6 @@
                 else if (selectedCell && !e.ctrlKey && !e.metaKey && e.key.length === 1) {
                     e.preventDefault();
                     selectedCell.click();
-                    // The keypress will be captured by the input
                     setTimeout(() => {
                         const input = selectedCell.querySelector('input, select');
                         if (input && input.tagName === 'INPUT') {
@@ -310,13 +432,12 @@
         function navigateWithArrows(direction) {
             if (!selectedCell) return;
 
-            const allCells = Array.from(document.querySelectorAll('td.editable'));
-            const currentIndex = allCells.indexOf(selectedCell);
-            if (currentIndex === -1) return;
+            const currentRow = selectedCell.closest('tr');
+            if (!currentRow) return;
 
-            const currentRow = selectedCell.parentElement;
             const rowCells = Array.from(currentRow.querySelectorAll('td.editable'));
             const cellIndexInRow = rowCells.indexOf(selectedCell);
+            if (cellIndexInRow === -1) return;
 
             let nextCell = null;
 
@@ -353,15 +474,15 @@
 
         function populateFilters() {
             const countrySelect = document.getElementById('filterCountry');
-            const citySelect = document.getElementById('filterCity');
-            
+
             Object.keys(countries).sort().forEach(country => {
-                countrySelect.innerHTML += `<option value="${country}">${country}</option>`;
+                const option = document.createElement('option');
+                option.value = country;
+                option.textContent = country;
+                countrySelect.appendChild(option);
             });
 
-            Object.values(countries).flat().sort().forEach(city => {
-                citySelect.innerHTML += `<option value="${city}">${city}</option>`;
-            });
+            updateCityOptions();
         }
 
         function setDatePreset(days) {
@@ -369,8 +490,8 @@
             const futureDate = new Date();
             futureDate.setDate(today.getDate() + days);
 
-            document.getElementById('filterCanxFrom').value = today.toISOString().split('T')[0];
-            document.getElementById('filterCanxTo').value = futureDate.toISOString().split('T')[0];
+            document.getElementById('filterCanxFrom').value = formatDateForInput(today);
+            document.getElementById('filterCanxTo').value = formatDateForInput(futureDate);
             applyFilters();
         }
 
@@ -382,7 +503,7 @@
 
         function addNewRow() {
             const newBooking = {
-                id: Date.now().toString(),
+                id: generateUniqueId(),
                 tourCode: '',
                 country: '',
                 city: '',
@@ -403,8 +524,7 @@
             bookings.unshift(newBooking);
             saveData();
             renderTable();
-            
-            // Auto-select first field after render
+
             setTimeout(() => {
                 const firstCell = document.querySelector('tbody tr:first-child td.editable');
                 if (firstCell) {
@@ -413,10 +533,74 @@
             }, 50);
         }
 
+        function generateUniqueId() {
+            return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function sortByColumn(column) {
+            if (currentSort.column === column) {
+                currentSort.ascending = !currentSort.ascending;
+            } else {
+                currentSort.column = column;
+                currentSort.ascending = true;
+            }
+            renderTable();
+        }
+
+        function getFilteredAndSortedBookings() {
+            let filtered = getFilteredBookings();
+
+            if (currentSort.column) {
+                filtered.sort((a, b) => {
+                    let aVal = a[currentSort.column] || '';
+                    let bVal = b[currentSort.column] || '';
+
+                    // Handle numeric columns
+                    if (['singlePPPN', 'doublePPPN', 'triplePPPN', 'cwb', 'cnb', 'dinnerCost'].includes(currentSort.column)) {
+                        aVal = parseFloat(aVal) || 0;
+                        bVal = parseFloat(bVal) || 0;
+                    }
+                    // Handle date columns
+                    else if (['checkIn', 'checkOut', 'cancellationDeadline'].includes(currentSort.column)) {
+                        aVal = new Date(aVal).getTime() || 0;
+                        bVal = new Date(bVal).getTime() || 0;
+                    }
+                    // Handle string columns
+                    else {
+                        aVal = String(aVal).toLowerCase();
+                        bVal = String(bVal).toLowerCase();
+                    }
+
+                    if (aVal < bVal) return currentSort.ascending ? -1 : 1;
+                    if (aVal > bVal) return currentSort.ascending ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            return filtered;
+        }
+
         function renderTable() {
             const tbody = document.getElementById('mainTableBody');
-            const filteredBookings = getFilteredBookings();
-            
+            const filteredBookings = getFilteredAndSortedBookings();
+
+            // Update sort indicators
+            document.querySelectorAll('th .sort-indicator').forEach(indicator => {
+                const column = indicator.dataset.column;
+                if (column === currentSort.column) {
+                    indicator.textContent = currentSort.ascending ? '↑' : '↓';
+                } else {
+                    indicator.textContent = '';
+                }
+            });
+
             if (filteredBookings.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="17" class="text-center text-muted">No bookings found</td></tr>';
                 updateStats(filteredBookings);
@@ -424,38 +608,39 @@
             }
 
             const today = new Date();
+            today.setHours(0, 0, 0, 0);
             const sevenDaysFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
 
             tbody.innerHTML = filteredBookings.map(booking => {
                 const canxDeadline = booking.cancellationDeadline ? new Date(booking.cancellationDeadline) : null;
                 const isWarning = canxDeadline && canxDeadline >= today && canxDeadline <= sevenDaysFromNow;
                 const hasComments = booking.comments && booking.comments.trim() !== '';
-                
+
                 return `
-                    <tr class="${isWarning ? 'deadline-warning' : ''}" data-id="${booking.id}">
-                        <td class="editable" data-field="tourCode" onclick="handleCellClick(this, '${booking.id}', 'tourCode', 'text')">${booking.tourCode || '-'}</td>
-                        <td class="editable" data-field="country" onclick="handleCellClick(this, '${booking.id}', 'country', 'select-country')">${booking.country || '-'}</td>
-                        <td class="editable" data-field="city" onclick="handleCellClick(this, '${booking.id}', 'city', 'select-city')">${booking.city || '-'}</td>
-                        <td class="editable" data-field="hotelName" onclick="handleCellClick(this, '${booking.id}', 'hotelName', 'text')">${booking.hotelName || '-'}</td>
-                        <td class="editable" data-field="checkIn" onclick="handleCellClick(this, '${booking.id}', 'checkIn', 'date')">${formatDate(booking.checkIn)}</td>
-                        <td class="editable" data-field="checkOut" onclick="handleCellClick(this, '${booking.id}', 'checkOut', 'date')">${formatDate(booking.checkOut)}</td>
-                        <td class="editable" data-field="roomsConfig" onclick="handleCellClick(this, '${booking.id}', 'roomsConfig', 'text')">${booking.roomsConfig || '-'}</td>
-                        <td class="editable price-cell" data-field="singlePPPN" onclick="handleCellClick(this, '${booking.id}', 'singlePPPN', 'number')">€${booking.singlePPPN || '-'}</td>
-                        <td class="editable price-cell" data-field="doublePPPN" onclick="handleCellClick(this, '${booking.id}', 'doublePPPN', 'number')">€${booking.doublePPPN || '-'}</td>
-                        <td class="editable price-cell" data-field="triplePPPN" onclick="handleCellClick(this, '${booking.id}', 'triplePPPN', 'number')">€${booking.triplePPPN || '-'}</td>
-                        <td class="editable price-cell" data-field="cwb" onclick="handleCellClick(this, '${booking.id}', 'cwb', 'number')">€${booking.cwb || '-'}</td>
-                        <td class="editable price-cell" data-field="cnb" onclick="handleCellClick(this, '${booking.id}', 'cnb', 'number')">€${booking.cnb || '-'}</td>
-                        <td class="editable price-cell" data-field="dinnerCost" onclick="handleCellClick(this, '${booking.id}', 'dinnerCost', 'number')">€${booking.dinnerCost || '-'}</td>
-                        <td class="editable" data-field="status" onclick="handleCellClick(this, '${booking.id}', 'status', 'select-status')">
-                            <span class="badge status-${booking.status}">${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>
+                    <tr class="${isWarning ? 'deadline-warning' : ''}" data-id="${escapeHtml(booking.id)}">
+                        <td class="editable" data-field="tourCode" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'tourCode', 'text')">${escapeHtml(booking.tourCode || '')}</td>
+                        <td class="editable" data-field="country" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'country', 'select-country')">${escapeHtml(booking.country || '')}</td>
+                        <td class="editable" data-field="city" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'city', 'select-city')">${escapeHtml(booking.city || '')}</td>
+                        <td class="editable" data-field="hotelName" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'hotelName', 'text')">${escapeHtml(booking.hotelName || '')}</td>
+                        <td class="editable" data-field="checkIn" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'checkIn', 'date')">${formatDate(booking.checkIn)}</td>
+                        <td class="editable" data-field="checkOut" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'checkOut', 'date')">${formatDate(booking.checkOut)}</td>
+                        <td class="editable" data-field="roomsConfig" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'roomsConfig', 'text')">${escapeHtml(booking.roomsConfig || '')}</td>
+                        <td class="editable price-cell" data-field="singlePPPN" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'singlePPPN', 'number')">€${booking.singlePPPN ? escapeHtml(String(booking.singlePPPN)) : ''}</td>
+                        <td class="editable price-cell" data-field="doublePPPN" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'doublePPPN', 'number')">€${booking.doublePPPN ? escapeHtml(String(booking.doublePPPN)) : ''}</td>
+                        <td class="editable price-cell" data-field="triplePPPN" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'triplePPPN', 'number')">€${booking.triplePPPN ? escapeHtml(String(booking.triplePPPN)) : ''}</td>
+                        <td class="editable price-cell" data-field="cwb" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'cwb', 'number')">€${booking.cwb ? escapeHtml(String(booking.cwb)) : ''}</td>
+                        <td class="editable price-cell" data-field="cnb" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'cnb', 'number')">€${booking.cnb ? escapeHtml(String(booking.cnb)) : ''}</td>
+                        <td class="editable price-cell" data-field="dinnerCost" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'dinnerCost', 'number')">€${booking.dinnerCost ? escapeHtml(String(booking.dinnerCost)) : ''}</td>
+                        <td class="editable" data-field="status" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'status', 'select-status')">
+                            <span class="badge status-${booking.status}">${escapeHtml(booking.status.charAt(0).toUpperCase() + booking.status.slice(1))}</span>
                         </td>
-                        <td class="editable" data-field="cancellationDeadline" onclick="handleCellClick(this, '${booking.id}', 'cancellationDeadline', 'date')">${formatDate(booking.cancellationDeadline)}</td>
+                        <td class="editable" data-field="cancellationDeadline" onclick="handleCellClick(this, '${escapeHtml(booking.id)}', 'cancellationDeadline', 'date')">${formatDate(booking.cancellationDeadline)}</td>
                         <td class="text-center">
-                            <i class="bi bi-chat-square-text comment-indicator ${hasComments ? 'text-primary' : 'text-muted'}" 
-                               onclick="openComments('${booking.id}')"></i>
+                            <i class="bi bi-chat-square-text comment-indicator ${hasComments ? 'text-primary' : 'text-muted'}"
+                               onclick="openComments('${escapeHtml(booking.id)}')" style="cursor: pointer;"></i>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteBooking('${booking.id}')">
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteBooking('${escapeHtml(booking.id)}')">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
@@ -473,24 +658,29 @@
 
         function editCell(cell, id, field, type) {
             if (isEditing) return;
-            
+
             isEditing = true;
             const booking = bookings.find(b => b.id === id);
+            if (!booking) {
+                isEditing = false;
+                return;
+            }
+
             const currentValue = booking[field] || '';
-            
+
             cell.classList.add('editing');
             cell.classList.remove('selected');
-            
+
             let inputHTML = '';
             if (type === 'text') {
-                inputHTML = `<input type="text" value="${currentValue}" data-id="${id}" data-field="${field}">`;
+                inputHTML = `<input type="text" value="${escapeHtml(currentValue)}" data-id="${escapeHtml(id)}" data-field="${field}">`;
             } else if (type === 'date') {
-                inputHTML = `<input type="date" value="${currentValue}" data-id="${id}" data-field="${field}">`;
+                inputHTML = `<input type="date" value="${escapeHtml(currentValue)}" data-id="${escapeHtml(id)}" data-field="${field}">`;
             } else if (type === 'number') {
-                inputHTML = `<input type="number" step="0.01" value="${currentValue}" data-id="${id}" data-field="${field}">`;
+                inputHTML = `<input type="number" step="0.01" value="${escapeHtml(currentValue)}" data-id="${escapeHtml(id)}" data-field="${field}">`;
             } else if (type === 'select-status') {
                 inputHTML = `
-                    <select data-id="${id}" data-field="${field}">
+                    <select data-id="${escapeHtml(id)}" data-field="${field}">
                         <option value="blocked" ${currentValue === 'blocked' ? 'selected' : ''}>Blocked</option>
                         <option value="confirmed" ${currentValue === 'confirmed' ? 'selected' : ''}>Confirmed</option>
                         <option value="cancellation" ${currentValue === 'cancellation' ? 'selected' : ''}>Cancellation</option>
@@ -498,91 +688,135 @@
                     </select>
                 `;
             } else if (type === 'select-country') {
+                const selectedCountry = currentValue;
                 inputHTML = `
-                    <select data-id="${id}" data-field="${field}">
+                    <select data-id="${escapeHtml(id)}" data-field="${field}">
                         <option value="">-</option>
-                        ${Object.keys(countries).sort().map(c => 
-                            `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
+                        ${Object.keys(countries).sort().map(c =>
+                            `<option value="${c}" ${selectedCountry === c ? 'selected' : ''}>${escapeHtml(c)}</option>`
                         ).join('')}
                     </select>
                 `;
             } else if (type === 'select-city') {
+                const selectedCity = currentValue;
+                const countryForCity = booking.country || '';
+                const availableCities = countryForCity ? countries[countryForCity] || [] : Object.values(countries).flat().sort();
+
                 inputHTML = `
-                    <select data-id="${id}" data-field="${field}">
+                    <select data-id="${escapeHtml(id)}" data-field="${field}">
                         <option value="">-</option>
-                        ${Object.values(countries).flat().sort().map(c => 
-                            `<option value="${c}" ${currentValue === c ? 'selected' : ''}>${c}</option>`
+                        ${availableCities.map(c =>
+                            `<option value="${c}" ${selectedCity === c ? 'selected' : ''}>${escapeHtml(c)}</option>`
                         ).join('')}
                     </select>
                 `;
             }
-            
+
             cell.innerHTML = inputHTML;
             const input = cell.querySelector('input, select');
+            if (!input) {
+                isEditing = false;
+                return;
+            }
+
             input.focus();
 
-            // Setup event listeners
-            input.addEventListener('blur', function() {
-                saveAndExit(this);
-            });
+            const blurHandler = function() {
+                saveAndExit(input);
+            };
 
-            input.addEventListener('keydown', function(e) {
+            const keydownHandler = function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    saveAndExit(this);
+                    saveAndExit(input);
                 } else if (e.key === 'Tab') {
                     e.preventDefault();
                     const moveBackward = e.shiftKey;
-                    saveAndNavigate(this, moveBackward);
+                    saveAndNavigate(input, moveBackward);
                 } else if (e.key === 'Escape') {
                     e.preventDefault();
                     cancelEdit(cell);
                 }
-            });
+            };
 
-            // For selects, auto-save on change
+            const changeHandler = function() {
+                if (input.tagName === 'SELECT') {
+                    saveAndExit(input);
+                }
+            };
+
+            input.addEventListener('blur', blurHandler, { once: true });
+            input.addEventListener('keydown', keydownHandler);
             if (input.tagName === 'SELECT') {
-                input.addEventListener('change', function() {
-                    saveAndExit(this);
-                });
+                input.addEventListener('change', changeHandler);
             }
         }
 
         function saveAndExit(input) {
+            if (!isEditing) return;
+
             const id = input.dataset.id;
             const field = input.dataset.field;
             const value = input.value;
-            
+
             const booking = bookings.find(b => b.id === id);
+            if (!booking) {
+                isEditing = false;
+                return;
+            }
+
             booking[field] = value;
-            
-            saveData();
+
+            try {
+                saveData();
+                showSaveFeedback();
+            } catch (e) {
+                console.error('Save failed:', e);
+                alert('Failed to save data. Check storage quota.');
+                return;
+            }
+
             isEditing = false;
             renderTable();
         }
 
         function saveAndNavigate(input, backward = false) {
+            if (!isEditing) return;
+
             const id = input.dataset.id;
             const field = input.dataset.field;
             const value = input.value;
-            
+
             const booking = bookings.find(b => b.id === id);
+            if (!booking) {
+                isEditing = false;
+                return;
+            }
+
             booking[field] = value;
-            
-            saveData();
+
+            try {
+                saveData();
+            } catch (e) {
+                console.error('Save failed:', e);
+                alert('Failed to save data. Check storage quota.');
+                isEditing = false;
+                return;
+            }
+
             isEditing = false;
 
             const cell = input.closest('td');
             const row = cell.parentElement;
             const rowCells = Array.from(row.querySelectorAll('td.editable'));
             const currentIndex = rowCells.indexOf(cell);
-            
+
             const nextIndex = backward ? currentIndex - 1 : currentIndex + 1;
-            
+
             renderTable();
 
             setTimeout(() => {
-                const newRow = document.querySelector(`tr[data-id="${id}"]`);
+                const newRow = document.querySelector(`tr[data-id="${escapeHtml(id)}"]`);
                 if (newRow) {
                     const newRowCells = Array.from(newRow.querySelectorAll('td.editable'));
                     const nextCell = newRowCells[nextIndex];
@@ -598,25 +832,54 @@
             renderTable();
         }
 
+        function showSaveFeedback() {
+            const feedback = document.createElement('div');
+            feedback.className = 'save-feedback';
+            feedback.textContent = '✓ Saved';
+            document.body.appendChild(feedback);
+
+            setTimeout(() => {
+                feedback.remove();
+            }, 2000);
+        }
+
         function openComments(id) {
             currentCommentId = id;
             const booking = bookings.find(b => b.id === id);
+            if (!booking) return;
+
             document.getElementById('commentsText').value = booking.comments || '';
-            new bootstrap.Modal(document.getElementById('commentsModal')).show();
+            modalInstance.show();
         }
 
         function saveComments() {
             const booking = bookings.find(b => b.id === currentCommentId);
+            if (!booking) return;
+
             booking.comments = document.getElementById('commentsText').value;
-            saveData();
+            try {
+                saveData();
+                showSaveFeedback();
+            } catch (e) {
+                console.error('Save failed:', e);
+                alert('Failed to save comments. Check storage quota.');
+                return;
+            }
+
             renderTable();
-            bootstrap.Modal.getInstance(document.getElementById('commentsModal')).hide();
+            modalInstance.hide();
         }
 
         function deleteBooking(id) {
             if (!confirm('Delete this booking?')) return;
             bookings = bookings.filter(b => b.id !== id);
-            saveData();
+            try {
+                saveData();
+            } catch (e) {
+                console.error('Save failed:', e);
+                alert('Failed to delete booking. Check storage quota.');
+                return;
+            }
             renderTable();
         }
 
@@ -629,13 +892,16 @@
             const canxFrom = document.getElementById('filterCanxFrom').value;
             const canxTo = document.getElementById('filterCanxTo').value;
 
+            const hasActiveFilter = tourCode || country || city || hotel || status || canxFrom || canxTo;
+            updateFilterIndicator(hasActiveFilter);
+
             return bookings.filter(b => {
                 if (tourCode && !b.tourCode.toLowerCase().includes(tourCode)) return false;
                 if (country && b.country !== country) return false;
                 if (city && b.city !== city) return false;
                 if (hotel && !b.hotelName.toLowerCase().includes(hotel)) return false;
                 if (status && b.status !== status) return false;
-                
+
                 // Date range filter
                 if (canxFrom || canxTo) {
                     if (!b.cancellationDeadline) return false;
@@ -643,9 +909,28 @@
                     if (canxFrom && deadline < new Date(canxFrom)) return false;
                     if (canxTo && deadline > new Date(canxTo)) return false;
                 }
-                
+
                 return true;
             });
+        }
+
+        function updateFilterIndicator(hasActiveFilter) {
+            const filterContainer = document.getElementById('filtersContainer');
+            if (hasActiveFilter) {
+                filterContainer.classList.add('active');
+                let badge = filterContainer.querySelector('.filter-active-badge');
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'filter-active-badge';
+                    badge.textContent = 'Filters Active';
+                    const heading = filterContainer.querySelector('.row').parentElement;
+                    if (heading) heading.insertBefore(badge, heading.querySelector('.row').nextSibling);
+                }
+            } else {
+                filterContainer.classList.remove('active');
+                const badge = filterContainer.querySelector('.filter-active-badge');
+                if (badge) badge.remove();
+            }
         }
 
         function applyFilters() {
@@ -662,14 +947,27 @@
         }
 
         function updateStats(filtered) {
-            document.getElementById('statTotal').textContent = filtered.length;
-            
+            const total = bookings.length;
+            const filteredCount = filtered.length;
+            const isFiltered = filteredCount !== total;
+
+            document.getElementById('statTotal').textContent = filteredCount;
+            document.getElementById('statTotalLabel').textContent = isFiltered ? 'Visible Bookings' : 'Total Bookings';
+
+            const infoElement = document.getElementById('statTotalInfo');
+            if (isFiltered) {
+                infoElement.textContent = `(${total} total)`;
+            } else {
+                infoElement.textContent = '';
+            }
+
             const totalRooms = filtered.reduce((sum, b) => {
+                if (!b.roomsConfig) return sum;
                 const matches = b.roomsConfig.match(/\d+/g);
                 return sum + (matches ? matches.reduce((a, c) => a + parseInt(c), 0) : 0);
             }, 0);
             document.getElementById('statRooms').textContent = totalRooms;
-            
+
             document.getElementById('statBlocked').textContent = filtered.filter(b => b.status === 'blocked').length;
             document.getElementById('statConfirmed').textContent = filtered.filter(b => b.status === 'confirmed').length;
             document.getElementById('statCancellation').textContent = filtered.filter(b => b.status === 'cancellation').length;
@@ -677,30 +975,71 @@
         }
 
         function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('en-GB');
+            if (!dateStr) return '';
+            try {
+                const date = new Date(dateStr + 'T00:00:00');
+                return date.toLocaleDateString('en-GB');
+            } catch (e) {
+                return '';
+            }
+        }
+
+        function formatDateForInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
         function saveData() {
-            localStorage.setItem('hotelBookings', JSON.stringify(bookings));
+            try {
+                const dataStr = JSON.stringify(bookings);
+                localStorage.setItem('hotelBookings', dataStr);
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    throw new Error('Storage quota exceeded. Please export and clear old data.');
+                }
+                throw e;
+            }
         }
 
         function loadData() {
-            const saved = localStorage.getItem('hotelBookings');
-            if (saved) {
-                bookings = JSON.parse(saved);
+            try {
+                const saved = localStorage.getItem('hotelBookings');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed)) {
+                        bookings = parsed;
+                    } else {
+                        console.warn('Invalid bookings data format');
+                        bookings = [];
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load data:', e);
+                bookings = [];
             }
         }
 
         function exportData() {
-            const dataStr = JSON.stringify(bookings, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `hotel-tracker-${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
+            try {
+                const dataStr = JSON.stringify(bookings, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `hotel-tracker-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+
+                // Cleanup
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 100);
+            } catch (e) {
+                console.error('Export failed:', e);
+                alert('Export failed');
+            }
         }
 
         function importData(event) {
@@ -711,17 +1050,39 @@
             reader.onload = function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
-                    if (confirm('Replace all data with imported file?')) {
-                        bookings = imported;
-                        saveData();
-                        renderTable();
-                        alert('Import successful');
+
+                    if (!Array.isArray(imported)) {
+                        throw new Error('Invalid format: expected array of bookings');
+                    }
+
+                    // Validate imported data structure
+                    const validated = imported.filter(item => {
+                        return item && typeof item === 'object' && item.id;
+                    });
+
+                    if (validated.length === 0) {
+                        throw new Error('No valid bookings found in import');
+                    }
+
+                    if (confirm(`Import ${validated.length} bookings? This will replace all current data.`)) {
+                        bookings = validated;
+                        try {
+                            saveData();
+                            showSaveFeedback();
+                            renderTable();
+                        } catch (e) {
+                            console.error('Save failed after import:', e);
+                            alert('Import succeeded but failed to save. Check storage quota.');
+                        }
                     }
                 } catch (err) {
-                    alert('Invalid file');
+                    alert(`Invalid file: ${err.message}`);
                 }
             };
             reader.readAsText(file);
+
+            // Reset file input so same file can be imported again
+            event.target.value = '';
         }
     </script>
 </body>
